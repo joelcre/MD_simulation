@@ -1,0 +1,53 @@
+%----main program for assignment 1.8-----%
+
+clear all
+clc
+close all
+filename1 = 'energy6.txt';
+A1 = importdata(filename1);
+
+pot_en= A1(:,2);
+kin_en=A1(:,3);
+tot_en=A1(:,1);
+
+% cut off the first values because the simulation has not reached
+% equilibrium
+pot_en_eq=pot_en(401:1:length(pot_en));
+kin_en_eq=kin_en(401:1:length(kin_en));
+tot_en_eq=tot_en(401:1:length(tot_en));
+
+%Creating a vector containing the various block sizes, 
+block_nums=[];
+for n=1:length(pot_en_eq)/2
+    block_nums(n)=2*n;
+    
+end
+
+std_vect=zeros(1,length(block_nums));  % vector containing the standard deviation for the block averages
+mean_vect=zeros(1,length(block_nums)); % mean values for the different block averages
+std_err_vect=zeros(1,length(block_nums)); % error of the standard deviations
+
+% for each iteration of the loop the mean, standard deviation and error
+%in the standard deviation is calculated for a specific block size
+for j=1:length(block_nums)
+ [std_m_err,std_m]=(block_av6(pot_en_eq,block_nums(j)));
+ std_vect(j)=std_m;
+% mean_vect(j)=av;
+ std_err_vect(j)=std_m_err;
+end
+ 
+block_sizes=(length(pot_en_eq)./block_nums);
+%plotting block sizes against their respective standard deviation of the
+% mean
+figure(1)
+ plot(block_sizes(1:1:end),std_vect(1:1:end),'.')
+% hold on
+%errorbar(block_sizes(1:70:end),std_vect(1:70:end),std_err_vect(1:70:end),'r')
+%errorbar(std_vect(1:50:end),std_vect(1:50:end),std_err_vect(1:50:end),std_err_vect(1:50:end))
+
+xlabel('block sizes')
+ylabel('\sigma')
+
+
+
+
