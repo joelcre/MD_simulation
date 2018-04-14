@@ -26,7 +26,7 @@ void read_write(particle p[], FILE*fp, double *energy, double*pot_en, double*kin
 double randomize(double*r);
 void r_distr(particle p[], FILE*fp);
 
-/*arrays for storin previous accelerations*/
+/*arrays for storing previous accelerations*/
 double prev_ax[N_PART];
 double prev_ay[N_PART];
 double prev_az[N_PART];
@@ -42,37 +42,25 @@ int main()
 	int counter=0;
 
 
-	/*Arrays for storing quantities*/
-#define ARRAY_SIZE 100200//100200   // Number of time-steps
-	const double box_length = 10.229;
+#define TIME_STEPS 100200   // Number of time-steps
+	const double box_length = 10.229; // domain
 	const double temp = 0.7876; //reduced temperature(94.4 K*kb/epsilon)
 	double time = 0;
 
 	FILE *fp;
-	//FILE *fp2;
 	
 	fp = fopen("/home/joel/Dokument/SF2568/MD_simulation/energy.txt","w+");
-        //fp = fopen("C:/Users/m2cre/Desktop/MD_simulation_matlab_v3/part_dist.txt", "w+");
-	//fp2 = fopen("C:/Users/m2cre/Desktop/MD_simulation_matlab_v3/speed_eq4.txt", "w+");
-	//fp3 = fopen("C:/Users/m2cre/Desktop/MD_simulation_matlab_v3/energy7.txt", "w+");
+       
 
-	clock_t tic = clock();
-
-	init(p, box_length, delta_t, temp); //
+	init(p, box_length, delta_t, temp); // initializing particle positions and velocities
 	force(p, &en); // Force initialization
 
-	 /*MD-loop */
-	for (int i = 0; i < ARRAY_SIZE; i++) {
+	 /*MD-loop, integrates the equations of motion with the verlet algorithm for the particles with a specific number of time steps */
+	for (int i = 0; i < TIME_STEPS; i++) {
 		integrate(p, &en, delta_t, &pot_en, &kin_en);
-		counter++;
-		//printf("\n %i",counter);
+
 		
-		
-		/*if (i % 1000 == 0) {
-		r_distr( p, fp);
-		}*/
-		
-		
+		/*printing energies to file*/
 		fprintf(fp, "   ");
 		fprintf(fp, "%f", en);
 		fprintf(fp, "   ");
@@ -80,20 +68,13 @@ int main()
 		fprintf(fp, "   ");
 		fprintf(fp, "%f", kin_en);
 		fprintf(fp, "\n"); 
-		time = time + delta_t; // change this 
+		time = time + delta_t; 
 
 
 	}
 	
-	clock_t toc = clock();
-
-	printf("Elapsed: %f seconds\n", (double)(toc - tic) / CLOCKS_PER_SEC);
-
 
 	fclose(fp);
-	//fclose(fp2);
-	//fclose(fp3); 
-
 
 	return 0;
 }
@@ -272,7 +253,7 @@ void lattice_position(particle p[], double box_length) {
 			z_d = p[j].z - p[i].z;
 			periodic_bc(&x_d, &y_d, &z_d, box_length);
 			dt = x_d*x_d + y_d*y_d + z_d*z_d; // radial distance between particles squared
-			if (dt < cutoff_dist) {           // if distance is less than cutoff distance, energy from cutoff
+			if (dt < cutoff_dist) {           // if distance is less than cutoff distance,calculate forces between particles
 				lennard_jones(dt, &p[j], &p[i], x_d, y_d, z_d, energy);
 
 			}
@@ -353,11 +334,10 @@ void lattice_position(particle p[], double box_length) {
 		prev_az[i] = p[i].fz;
 	}
 	/*Updating forces for the new positions*/
-
 	force(p, energy);
 
 	for (int i = 0; i < N_PART; i++) {
-		/*Calculating velocities*/
+		/*Calculating new velocities*/
 		p[i].vx = p[i].vx + delta_t*(prev_ax[i] + p[i].fx)*0.5;
 		p[i].vy = p[i].vy + delta_t*(prev_ay[i] + p[i].fy)*0.5;
 		p[i].vz = p[i].vz + delta_t*(prev_az[i] + p[i].fz)*0.5;
@@ -397,41 +377,6 @@ void lattice_position(particle p[], double box_length) {
 
 
 
-void r_distr(particle p[], FILE*fp) {
-
-	double x_d, y_d, z_d, dt;
-	double box_length = 10.229;
-
-	/* Calculating distances between particles*/
-	for (int j = 0; j < N_PART; j++) {
-		for (int i = 0; i < N_PART; i++) {
-			if (i != j) {
-				x_d = p[j].x - p[i].x;
-				y_d = p[j].y - p[i].y;
-				z_d = p[j].z - p[i].z;
-				periodic_bc(&x_d, &y_d, &z_d, box_length);
-				dt = x_d*x_d + y_d*y_d + z_d*z_d;
-
-				fprintf(fp, "%f", dt); // printing to text file
-				fprintf(fp, "\n");
-
-			}
-		}
-	}
-}
-
-
-void read_write(particle p[], FILE*fp, double *energy, double*pot_en, double*kin_en) {
-	double v_sqtemp;
-	for (int i = 0; i < N_PART; i++) {
-		v_sqtemp = pow(p[i].vx, 2) + pow(p[i].vy, 2) + pow(p[i].vz, 2);
-		fprintf(fp, "%f", v_sqtemp);
-		fprintf(fp, "\n");
-	}
-
-
-
-}
 
 
 
